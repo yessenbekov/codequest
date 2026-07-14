@@ -11,35 +11,66 @@ function parseMarkdown(text) {
     .replace(/\n/g, '<br/>')
 }
 
-function checkAnswer(code, lesson) {
-  const normalized = code.trim()
-  if (!normalized) return null
+function evalCode(code) {
+  const vars = {}
+  const outputs = []
 
-  // Extract what would be printed/logged
-  const printMatch = normalized.match(/print\(["'](.+?)["']\)/)
-  const consoleMatch = normalized.match(/console\.log\((.+?)\)/)
-
-  let output = null
-  if (printMatch) {
-    output = printMatch[1]
-  } else if (consoleMatch) {
-    const val = consoleMatch[1].trim()
-    if (val.startsWith('"') || val.startsWith("'")) {
-      output = val.slice(1, -1)
-    } else {
-      try { output = String(eval(val)) } catch { output = val }
+  // Parse variable declarations: let/const/var x = value  OR  x = value (Python)
+  const declRe = /(?:let|const|var)?\s*(\w+)\s*=\s*(.+?)(?:;|$)/gm
+  let m
+  while ((m = declRe.exec(code)) !== null) {
+    const [, name, rawVal] = m
+    const v = rawVal.trim()
+    if (v.startsWith('"') || v.startsWith("'")) {
+      vars[name] = v.slice(1, -1)
+    } else if (!isNaN(Number(v))) {
+      vars[name] = Number(v)
     }
   }
 
-  if (output === null) {
-    // Try evaluating simple expressions
-    try {
-      const result = eval(normalized)
-      if (result !== undefined) output = String(result)
-    } catch { /* ignore */ }
+  // Collect all print() / console.log() calls
+  const callRe = /(?:print|console\.log)\((.+?)\)/g
+  while ((m = callRe.exec(code)) !== null) {
+    const arg = m[1].trim()
+    if (arg.startsWith('"') || arg.startsWith("'")) {
+      outputs.push(arg.slice(1, -1))
+    } else if (arg in vars) {
+      outputs.push(String(vars[arg]))
+    } else {
+      // Handle string concatenation: "text" + varName + "text"
+      try {
+        const resolved = arg.replace(/(\w+)/g, (tok) =>
+          tok in vars ? JSON.stringify(vars[tok]) : tok
+        )
+        // eslint-disable-next-line no-new-func
+        const result = new Function(...Object.keys(vars), `return ${resolved}`)(...Object.values(vars))
+        outputs.push(String(result))
+      } catch {
+        // Try pure math expression
+        try {
+          // eslint-disable-next-line no-new-func
+          outputs.push(String(new Function(`return ${arg}`)()))
+        } catch { /* skip */ }
+      }
+    }
   }
 
-  return output === lesson.expectedOutput ? 'correct' : 'wrong'
+  return outputs
+}
+
+function checkAnswer(code, lesson) {
+  const trimmed = code.trim()
+  if (!trimmed) return null
+
+  const outputs = evalCode(trimmed)
+  const expected = lesson.expectedOutput.trim()
+
+  if (outputs.some(o => o.trim() === expected)) return 'correct'
+
+  // Fuzzy: ignore case and extra whitespace
+  if (outputs.some(o => o.trim().toLowerCase() === expected.toLowerCase())) return 'correct'
+
+  return 'wrong'
 }
 
 export default function Lesson({ lesson, course, onBack, onComplete, onNext, hasNext, alreadyDone }) {
