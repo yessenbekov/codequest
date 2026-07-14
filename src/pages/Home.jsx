@@ -1,15 +1,30 @@
 import { courses } from '../data/courses'
 import { isLessonCompleted } from '../store/progress'
 
-export default function Home({ progress, onSelectCourse, user, onLogout }) {
+export default function Home({ progress, onSelectCourse, user, onLogout, theme, onToggleTheme }) {
   return (
     <div style={{ maxWidth: 600, margin: '0 auto', padding: '24px 16px' }}>
       <header style={{ marginBottom: 32 }}>
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ color: 'var(--text-dim)', fontSize: 13 }}>
               {user?.email}
             </span>
+            <button
+              onClick={onToggleTheme}
+              title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
+              style={{
+                background: 'var(--surface2)',
+                border: '1px solid var(--border)',
+                borderRadius: 8,
+                padding: '6px 10px',
+                fontSize: 16,
+                lineHeight: 1,
+                color: 'var(--text)',
+              }}
+            >
+              {theme === 'dark' ? '☀️' : '🌙'}
+            </button>
             <button
               onClick={onLogout}
               style={{

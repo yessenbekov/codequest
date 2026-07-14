@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { supabase } from './lib/supabase'
 import { loadProgress, saveProgress, markLessonComplete, isLessonCompleted } from './store/progress'
+import { loadTheme, applyTheme } from './store/theme'
 import Home from './pages/Home'
 import CourseMap from './pages/CourseMap'
 import Lesson from './pages/Lesson'
@@ -8,8 +9,19 @@ import Auth from './pages/Auth'
 import './index.css'
 
 export default function App() {
-  const [session, setSession] = useState(undefined) // undefined = loading
+  const [session, setSession] = useState(undefined)
   const [progress, setProgress] = useState(() => loadProgress())
+  const [theme, setTheme] = useState(() => {
+    const t = loadTheme()
+    applyTheme(t)
+    return t
+  })
+
+  function toggleTheme() {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    applyTheme(next)
+    setTheme(next)
+  }
   const [view, setView] = useState('home')
   const [activeCourse, setActiveCourse] = useState(null)
   const [activeLesson, setActiveLesson] = useState(null)
@@ -60,7 +72,7 @@ export default function App() {
   }
 
   if (!session) {
-    return <Auth />
+    return <Auth theme={theme} onToggleTheme={toggleTheme} />
   }
 
   return (
@@ -71,6 +83,8 @@ export default function App() {
           onSelectCourse={handleSelectCourse}
           user={session.user}
           onLogout={() => supabase.auth.signOut()}
+          theme={theme}
+          onToggleTheme={toggleTheme}
         />
       )}
       {view === 'course' && (

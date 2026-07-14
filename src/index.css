@@ -6,13 +6,27 @@
   --surface2: #252540;
   --border: #2E2E50;
   --accent: #6C63FF;
-  --accent2: #FF6584;
   --text: #E8E8F0;
   --text-dim: #8888AA;
   --green: #10B981;
   --red: #EF4444;
   --yellow: #F59E0B;
   --radius: 12px;
+  --code-bg: #0A0A14;
+}
+
+[data-theme="light"] {
+  --bg: #F5F5FA;
+  --surface: #FFFFFF;
+  --surface2: #EBEBF5;
+  --border: #D8D8EC;
+  --accent: #6C63FF;
+  --text: #1A1A2E;
+  --text-dim: #6666AA;
+  --green: #059669;
+  --red: #DC2626;
+  --yellow: #D97706;
+  --code-bg: #F0F0FA;
 }
 
 body {
@@ -21,6 +35,7 @@ body {
   font-family: 'Inter', system-ui, sans-serif;
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
+  transition: background 0.2s, color 0.2s;
 }
 
 button { cursor: pointer; border: none; font-family: inherit; }
@@ -45,8 +60,8 @@ pre, code { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
 textarea {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 14px;
-  background: #0A0A14;
-  color: #E8E8F0;
+  background: var(--code-bg);
+  color: var(--text);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px;

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-export default function Auth() {
+export default function Auth({ theme, onToggleTheme }) {
   const [mode, setMode] = useState('login') // login | register
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -37,11 +37,24 @@ export default function Auth() {
   return (
     <div style={{
       minHeight: '100dvh',
+      position: 'relative',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       padding: '24px 16px',
     }}>
+      <button
+        onClick={onToggleTheme}
+        title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
+        style={{
+          position: 'absolute', top: 16, right: 16,
+          background: 'var(--surface2)', border: '1px solid var(--border)',
+          borderRadius: 8, padding: '6px 10px', fontSize: 18, lineHeight: 1,
+        }}
+      >
+        {theme === 'dark' ? '☀️' : '🌙'}
+      </button>
+
       <div style={{ width: '100%', maxWidth: 400 }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ fontSize: 48 }}>🚀</div>
@@ -89,7 +102,7 @@ export default function Auth() {
                 style={{
                   width: '100%',
                   padding: '10px 14px',
-                  background: '#0A0A14',
+                  background: 'var(--code-bg)',
                   border: '1px solid var(--border)',
                   borderRadius: 8,
                   color: 'var(--text)',
@@ -113,7 +126,7 @@ export default function Auth() {
                 style={{
                   width: '100%',
                   padding: '10px 14px',
-                  background: '#0A0A14',
+                  background: 'var(--code-bg)',
                   border: '1px solid var(--border)',
                   borderRadius: 8,
                   color: 'var(--text)',
