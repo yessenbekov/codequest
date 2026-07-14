@@ -1,13 +1,35 @@
 import { courses } from '../data/courses'
 import { isLessonCompleted } from '../store/progress'
 
-export default function Home({ progress, onSelectCourse }) {
+export default function Home({ progress, onSelectCourse, user, onLogout }) {
   return (
     <div style={{ maxWidth: 600, margin: '0 auto', padding: '24px 16px' }}>
-      <header style={{ textAlign: 'center', marginBottom: 32 }}>
-        <div style={{ fontSize: 48, marginBottom: 8 }}>🚀</div>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)' }}>CodeQuest</h1>
-        <p style={{ color: 'var(--text-dim)', marginTop: 6 }}>Учись программировать играя</p>
+      <header style={{ marginBottom: 32 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ color: 'var(--text-dim)', fontSize: 13 }}>
+              {user?.email}
+            </span>
+            <button
+              onClick={onLogout}
+              style={{
+                background: 'var(--surface2)',
+                border: '1px solid var(--border)',
+                borderRadius: 8,
+                padding: '6px 12px',
+                fontSize: 13,
+                color: 'var(--text-dim)',
+              }}
+            >
+              Выйти
+            </button>
+          </div>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 48, marginBottom: 8 }}>🚀</div>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)' }}>CodeQuest</h1>
+          <p style={{ color: 'var(--text-dim)', marginTop: 6 }}>Учись программировать играя</p>
+        </div>
       </header>
 
       <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 32 }}>

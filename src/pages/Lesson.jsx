@@ -42,17 +42,17 @@ function checkAnswer(code, lesson) {
   return output === lesson.expectedOutput ? 'correct' : 'wrong'
 }
 
-export default function Lesson({ lesson, course, onBack, onComplete, alreadyDone }) {
-  const [tab, setTab] = useState('theory') // theory | task
+export default function Lesson({ lesson, course, onBack, onComplete, onNext, hasNext, alreadyDone }) {
+  const [tab, setTab] = useState('theory')
   const [code, setCode] = useState('')
-  const [result, setResult] = useState(null) // null | 'correct' | 'wrong'
+  const [result, setResult] = useState(alreadyDone ? 'correct' : null)
   const [showHint, setShowHint] = useState(false)
 
   function handleRun() {
     const verdict = checkAnswer(code, lesson)
     setResult(verdict)
     if (verdict === 'correct' && !alreadyDone) {
-      setTimeout(() => onComplete(lesson), 800)
+      onComplete(lesson)
     }
   }
 
@@ -197,9 +197,25 @@ export default function Lesson({ lesson, course, onBack, onComplete, alreadyDone
             </div>
           )}
 
-          {alreadyDone && (
-            <div style={{ marginTop: 12, textAlign: 'center', color: 'var(--text-dim)', fontSize: 13 }}>
-              ✅ Этот урок уже пройден
+          {result === 'correct' && (
+            <div style={{ marginTop: 12 }}>
+              {hasNext ? (
+                <button
+                  className="btn btn-success"
+                  onClick={onNext}
+                  style={{ width: '100%', justifyContent: 'center', fontSize: 16 }}
+                >
+                  Следующий урок →
+                </button>
+              ) : (
+                <button
+                  className="btn btn-secondary"
+                  onClick={onBack}
+                  style={{ width: '100%', justifyContent: 'center' }}
+                >
+                  🏆 Курс завершён! Вернуться назад
+                </button>
+              )}
             </div>
           )}
         </div>
