@@ -71,6 +71,8 @@ export default function Home({ progress, onSelectCourse, user, onLogout, theme, 
                 borderRadius: 'var(--radius)',
                 padding: 20,
                 textAlign: 'left',
+                color: 'var(--text)',
+                width: '100%',
                 transition: 'border-color 0.2s, transform 0.1s',
               }}
               onMouseEnter={e => e.currentTarget.style.borderColor = course.color}
