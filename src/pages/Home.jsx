@@ -116,7 +116,7 @@ function Stat({ emoji, value, label }) {
 
 function ProgressBar({ pct, color }) {
   return (
-    <div style={{ background: 'var(--surface2)', borderRadius: 99, height: 6, overflow: 'hidden', border: '1px solid var(--border)' }}>
+    <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 99, height: 6, overflow: 'hidden' }}>
       <div style={{
         width: pct > 0 ? `${pct}%` : 0,
         height: '100%',
