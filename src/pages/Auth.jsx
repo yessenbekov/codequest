@@ -102,7 +102,7 @@ export default function Auth({ theme, onToggleTheme }) {
                 style={{
                   width: '100%',
                   padding: '10px 14px',
-                  background: 'var(--code-bg)',
+                  background: 'var(--surface2)',
                   border: '1px solid var(--border)',
                   borderRadius: 8,
                   color: 'var(--text)',
@@ -126,7 +126,7 @@ export default function Auth({ theme, onToggleTheme }) {
                 style={{
                   width: '100%',
                   padding: '10px 14px',
-                  background: 'var(--code-bg)',
+                  background: 'var(--surface2)',
                   border: '1px solid var(--border)',
                   borderRadius: 8,
                   color: 'var(--text)',

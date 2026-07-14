@@ -4,10 +4,10 @@ import { ArrowLeft, Lightbulb, CheckCircle, XCircle } from 'lucide-react'
 function parseMarkdown(text) {
   return text
     .replace(/```[\w]*\n([\s\S]*?)```/g, (_, code) =>
-      `<pre style="background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px;overflow-x:auto;margin:8px 0"><code>${code.replace(/</g,'&lt;')}</code></pre>`
+      `<pre style="background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px;overflow-x:auto;margin:8px 0;color:var(--text)"><code>${code.replace(/</g,'&lt;')}</code></pre>`
     )
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/`([^`]+)`/g, '<code style="background:#1A1A2E;padding:2px 6px;border-radius:4px">$1</code>')
+    .replace(/`([^`]+)`/g, '<code style="background:var(--surface2);color:var(--text);padding:2px 6px;border-radius:4px">$1</code>')
     .replace(/\n/g, '<br/>')
 }
 
