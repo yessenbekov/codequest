@@ -35,6 +35,8 @@ export default function CourseMap({ course, progress, onBack, onSelectLesson }) 
                 gap: 16,
                 opacity: locked ? 0.4 : 1,
                 cursor: locked ? 'not-allowed' : 'pointer',
+                color: 'var(--text)',
+                width: '100%',
                 transition: 'transform 0.1s',
               }}
             >
