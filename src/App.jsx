@@ -97,6 +97,7 @@ export default function App() {
       )}
       {view === 'lesson' && (
         <Lesson
+          key={activeLesson.id}
           lesson={activeLesson}
           course={activeCourse}
           alreadyDone={isLessonCompleted(progress, activeLesson.id)}
