@@ -301,22 +301,138 @@ function checkAnswer(code, lesson) {
   return 'wrong'
 }
 
+const CONFETTI_COLORS = ['#6C63FF','#10B981','#F59E0B','#EF4444','#3B82F6','#EC4899','#8B5CF6']
+const PARTICLE_COUNT = 60
+
+function Confetti() {
+  const particles = Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    delay: Math.random() * 0.8,
+    duration: 1.2 + Math.random() * 1.2,
+    color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+    size: 6 + Math.random() * 8,
+    rotation: Math.random() * 360,
+    shape: Math.random() > 0.5 ? 'rect' : 'circle',
+  }))
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 999, overflow: 'hidden' }}>
+      <style>{`
+        @keyframes confetti-fall {
+          0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+          80%  { opacity: 1; }
+          100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+        }
+        @keyframes confetti-sway {
+          0%,100% { margin-left: 0; }
+          33%     { margin-left: 20px; }
+          66%     { margin-left: -20px; }
+        }
+      `}</style>
+      {particles.map(p => (
+        <div
+          key={p.id}
+          style={{
+            position: 'absolute',
+            left: `${p.x}%`,
+            top: 0,
+            width: p.size,
+            height: p.shape === 'rect' ? p.size * 0.5 : p.size,
+            borderRadius: p.shape === 'circle' ? '50%' : 2,
+            background: p.color,
+            animation: `confetti-fall ${p.duration}s ${p.delay}s ease-in forwards, confetti-sway ${p.duration * 0.6}s ${p.delay}s ease-in-out infinite`,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+function WinOverlay({ lesson, hasNext, onNext, onBack }) {
+  return (
+    <>
+      <Confetti />
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 998,
+        background: 'rgba(0,0,0,0.6)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 16,
+        animation: 'fadeIn 0.2s ease',
+      }}>
+        <style>{`@keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+          @keyframes popIn { from { transform:scale(0.7); opacity:0 } to { transform:scale(1); opacity:1 } }`}
+        </style>
+        <div style={{
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 24,
+          padding: '40px 32px',
+          textAlign: 'center',
+          maxWidth: 340,
+          width: '100%',
+          animation: 'popIn 0.3s cubic-bezier(0.34,1.56,0.64,1)',
+        }}>
+          <div style={{ fontSize: 64, marginBottom: 12 }}>🏆</div>
+          <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 6 }}>Отлично!</h2>
+          <p style={{ color: 'var(--text-dim)', marginBottom: 20 }}>Урок «{lesson.title}» завершён</p>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            background: 'var(--surface2)', borderRadius: 99,
+            padding: '8px 20px', fontSize: 20, fontWeight: 700,
+            color: 'var(--yellow)', marginBottom: 28,
+          }}>
+            ⚡ +{lesson.xp} XP
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {hasNext ? (
+              <button className="btn btn-success" onClick={onNext}
+                style={{ width: '100%', justifyContent: 'center', fontSize: 16 }}>
+                Следующий урок →
+              </button>
+            ) : (
+              <button className="btn btn-primary" onClick={onBack}
+                style={{ width: '100%', justifyContent: 'center', fontSize: 16 }}>
+                🎉 Курс завершён!
+              </button>
+            )}
+            <button className="btn btn-secondary" onClick={onBack}
+              style={{ width: '100%', justifyContent: 'center' }}>
+              Назад к урокам
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
 export default function Lesson({ lesson, course, onBack, onComplete, onNext, hasNext, alreadyDone }) {
   const [tab, setTab] = useState('theory')
   const [code, setCode] = useState('')
   const [result, setResult] = useState(alreadyDone ? 'correct' : null)
   const [showHint, setShowHint] = useState(false)
+  const [showWin, setShowWin] = useState(false)
 
   function handleRun() {
     const verdict = checkAnswer(code, lesson)
     setResult(verdict)
     if (verdict === 'correct' && !alreadyDone) {
       onComplete(lesson)
+      setShowWin(true)
     }
   }
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '24px 16px' }}>
+      {showWin && (
+        <WinOverlay
+          lesson={lesson}
+          hasNext={hasNext}
+          onNext={() => { setShowWin(false); onNext() }}
+          onBack={() => { setShowWin(false); onBack() }}
+        />
+      )}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
         <button className="btn btn-secondary" onClick={onBack} style={{ padding: '8px 14px' }}>
           <ArrowLeft size={16} />
@@ -456,7 +572,7 @@ export default function Lesson({ lesson, course, onBack, onComplete, onNext, has
             </div>
           )}
 
-          {result === 'correct' && (
+          {result === 'correct' && alreadyDone && (
             <div style={{ marginTop: 12 }}>
               {hasNext ? (
                 <button
