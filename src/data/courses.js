@@ -95,6 +95,132 @@ else:
         hint: 'score = 90, затем if score >= 60: print("Сдал")',
         type: 'output',
       },
+      {
+        id: 'py-for',
+        title: 'Цикл for',
+        xp: 30,
+        theory: `**for** повторяет код для каждого элемента последовательности.
+
+\`\`\`python
+for i in range(5):
+    print(i)
+# выведет: 0 1 2 3 4
+\`\`\`
+
+**range(n)** генерирует числа от 0 до n-1.
+**range(1, 6)** — от 1 до 5.
+
+\`\`\`python
+for i in range(1, 4):
+    print(i)
+# выведет: 1 2 3
+\`\`\``,
+        task: 'Выведи числа от 1 до 3, каждое на новой строке.',
+        expectedOutput: '1\n2\n3',
+        hint: 'for i in range(1, 4): print(i)',
+        type: 'output',
+      },
+      {
+        id: 'py-while',
+        title: 'Цикл while',
+        xp: 30,
+        theory: `**while** выполняет блок кода, пока условие истинно.
+
+\`\`\`python
+count = 0
+while count < 3:
+    print(count)
+    count = count + 1
+# выведет: 0 1 2
+\`\`\`
+
+Не забудь изменять переменную внутри цикла, иначе цикл будет бесконечным!`,
+        task: 'Используй while: выведи числа 1, 2, 3 (каждое на новой строке). Начни с n = 1.',
+        expectedOutput: '1\n2\n3',
+        hint: 'n = 1, while n <= 3: print(n), n = n + 1',
+        type: 'output',
+      },
+      {
+        id: 'py-functions',
+        title: 'Функции',
+        xp: 35,
+        theory: `**Функция** — блок кода, который можно вызывать многократно.
+
+\`\`\`python
+def greet(name):
+    print("Привет, " + name + "!")
+
+greet("Алибек")   # Привет, Алибек!
+greet("Мадина")   # Привет, Мадина!
+\`\`\`
+
+Функция объявляется через **def**, затем её имя и параметры в скобках.
+Функция может **возвращать** значение через **return**:
+
+\`\`\`python
+def add(a, b):
+    return a + b
+
+result = add(3, 4)
+print(result)  # 7
+\`\`\``,
+        task: 'Напиши функцию square(n), которая возвращает n * n. Вызови square(5) и выведи результат.',
+        expectedOutput: '25',
+        hint: 'def square(n): return n * n — затем print(square(5))',
+        type: 'output',
+      },
+      {
+        id: 'py-lists',
+        title: 'Списки',
+        xp: 35,
+        theory: `**Список** (list) хранит несколько значений в одной переменной.
+
+\`\`\`python
+fruits = ["яблоко", "банан", "апельсин"]
+print(fruits[0])   # яблоко
+print(fruits[1])   # банан
+print(len(fruits)) # 3
+\`\`\`
+
+Индексация начинается с **0**.
+Добавить элемент: **fruits.append("манго")**
+Перебрать все:
+
+\`\`\`python
+for fruit in fruits:
+    print(fruit)
+\`\`\``,
+        task: 'Создай список numbers = [10, 20, 30]. Выведи первый элемент.',
+        expectedOutput: '10',
+        hint: 'numbers = [10, 20, 30], затем print(numbers[0])',
+        type: 'output',
+      },
+      {
+        id: 'py-strings',
+        title: 'Строки',
+        xp: 30,
+        theory: `Строки в Python — это текст в кавычках. У них есть полезные методы:
+
+\`\`\`python
+s = "hello"
+print(s.upper())        # HELLO
+print(s.capitalize())   # Hello
+print(len(s))           # 5
+print(s.replace("l", "r"))  # herro
+\`\`\`
+
+**f-строки** — удобный способ вставить переменную в текст:
+
+\`\`\`python
+name = "Алибек"
+age = 20
+print(f"Меня зовут {name}, мне {age} лет")
+\`\`\``,
+        task: 'Создай переменную name = "python". Выведи её в верхнем регистре через .upper().',
+        expectedOutput: 'PYTHON',
+        hint: 'name = "python", затем print(name.upper())',
+        type: 'output',
+      },
     ],
   },
   {

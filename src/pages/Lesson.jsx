@@ -13,46 +13,222 @@ function parseMarkdown(text) {
 
 function evalCode(code) {
   const vars = {}
+  const funcs = {}
   const outputs = []
 
-  // Parse variable declarations: let/const/var x = value  OR  x = value (Python)
-  const declRe = /(?:let|const|var)?\s*(\w+)\s*=\s*(.+?)(?:;|$)/gm
-  let m
-  while ((m = declRe.exec(code)) !== null) {
-    const [, name, rawVal] = m
-    const v = rawVal.trim()
-    if (v.startsWith('"') || v.startsWith("'")) {
-      vars[name] = v.slice(1, -1)
-    } else if (!isNaN(Number(v))) {
-      vars[name] = Number(v)
+  function resolveVal(expr, localVars = vars) {
+    expr = expr.trim()
+    if (!expr) return undefined
+
+    // String literal
+    if ((expr.startsWith('"') && expr.endsWith('"')) ||
+        (expr.startsWith("'") && expr.endsWith("'"))) {
+      return expr.slice(1, -1)
+    }
+    // Number
+    if (!isNaN(Number(expr))) return Number(expr)
+
+    // f-string: f"...{var}..."
+    if ((expr.startsWith('f"') && expr.endsWith('"')) ||
+        (expr.startsWith("f'") && expr.endsWith("'"))) {
+      return expr.slice(2, -1).replace(/\{(\w+)\}/g, (_, v) =>
+        v in localVars ? String(localVars[v]) : v
+      )
+    }
+
+    // List literal [a, b, c]
+    if (expr.startsWith('[') && expr.endsWith(']')) {
+      const inner = expr.slice(1, -1).trim()
+      if (!inner) return []
+      return inner.split(',').map(e => resolveVal(e.trim(), localVars))
+    }
+
+    // list[index]
+    const idxM = expr.match(/^(\w+)\[(\d+)\]$/)
+    if (idxM) {
+      const arr = localVars[idxM[1]]
+      if (Array.isArray(arr)) return arr[Number(idxM[2])]
+    }
+
+    // string methods: var.upper() / .lower() / .capitalize() / .strip() / .len()
+    const methodM = expr.match(/^(\w+)\.(upper|lower|capitalize|strip)\(\)$/)
+    if (methodM) {
+      const val = String(resolveVal(methodM[1], localVars))
+      switch (methodM[2]) {
+        case 'upper': return val.toUpperCase()
+        case 'lower': return val.toLowerCase()
+        case 'capitalize': return val.charAt(0).toUpperCase() + val.slice(1).toLowerCase()
+        case 'strip': return val.trim()
+      }
+    }
+
+    // len(expr)
+    const lenM = expr.match(/^len\((\w+)\)$/)
+    if (lenM) {
+      const v = localVars[lenM[1]]
+      return Array.isArray(v) ? v.length : String(v).length
+    }
+
+    // Function call: name(args)
+    const callM = expr.match(/^(\w+)\(([^)]*)\)$/)
+    if (callM && funcs[callM[1]]) {
+      const args = callM[2] ? callM[2].split(',').map(a => resolveVal(a.trim(), localVars)) : []
+      return callFunc(callM[1], args)
+    }
+
+    // Variable
+    if (expr in localVars) return localVars[expr]
+
+    // Math / concatenation — substitute known vars and evaluate
+    try {
+      const resolved = expr.replace(/\b([a-zA-Z_]\w*)\b/g, tok => {
+        if (tok in localVars) return JSON.stringify(localVars[tok])
+        return tok
+      })
+      // eslint-disable-next-line no-new-func
+      return new Function(`return (${resolved})`)()
+    } catch { return expr }
+  }
+
+  function callFunc(name, argVals) {
+    const fn = funcs[name]
+    if (!fn) return undefined
+    const local = { ...vars }
+    fn.params.forEach((p, i) => { local[p] = argVals[i] })
+    for (const line of fn.body) {
+      const retM = line.trim().match(/^return\s+(.+)$/)
+      if (retM) return resolveVal(retM[1], local)
     }
   }
 
-  // Collect all print() / console.log() calls
-  const callRe = /(?:print|console\.log)\((.+?)\)/g
-  while ((m = callRe.exec(code)) !== null) {
-    const arg = m[1].trim()
-    if (arg.startsWith('"') || arg.startsWith("'")) {
-      outputs.push(arg.slice(1, -1))
-    } else if (arg in vars) {
-      outputs.push(String(vars[arg]))
-    } else {
-      // Handle string concatenation: "text" + varName + "text"
-      try {
-        const resolved = arg.replace(/(\w+)/g, (tok) =>
-          tok in vars ? JSON.stringify(vars[tok]) : tok
-        )
-        // eslint-disable-next-line no-new-func
-        const result = new Function(...Object.keys(vars), `return ${resolved}`)(...Object.values(vars))
-        outputs.push(String(result))
-      } catch {
-        // Try pure math expression
-        try {
-          // eslint-disable-next-line no-new-func
-          outputs.push(String(new Function(`return ${arg}`)()))
-        } catch { /* skip */ }
+  function execPrint(argStr, localVars = vars) {
+    argStr = argStr.trim()
+    const val = resolveVal(argStr, localVars)
+    outputs.push(val === undefined ? '' : String(val))
+  }
+
+  function execLine(line, localVars = vars) {
+    line = line.trim()
+    if (!line || line.startsWith('#')) return
+
+    // print(...) / console.log(...)
+    const printM = line.match(/^(?:print|console\.log)\((.+)\)$/)
+    if (printM) { execPrint(printM[1], localVars); return }
+
+    // var.append(value)
+    const appendM = line.match(/^(\w+)\.append\((.+)\)$/)
+    if (appendM) {
+      const arr = localVars[appendM[1]]
+      if (Array.isArray(arr)) arr.push(resolveVal(appendM[2], localVars))
+      return
+    }
+
+    // Assignment: [let/const/var] name = value
+    const assignM = line.match(/^(?:(?:let|const|var)\s+)?(\w+)\s*=\s*(.+)$/)
+    if (assignM) {
+      localVars[assignM[1]] = resolveVal(assignM[2], localVars)
+      return
+    }
+
+    // Standalone function call
+    const callM = line.match(/^(\w+)\(([^)]*)\)$/)
+    if (callM && funcs[callM[1]]) {
+      const args = callM[2] ? callM[2].split(',').map(a => resolveVal(a.trim(), localVars)) : []
+      callFunc(callM[1], args)
+    }
+  }
+
+  const lines = code.split('\n')
+  let i = 0
+
+  while (i < lines.length) {
+    const raw = lines[i]
+    const line = raw.trim()
+    if (!line || line.startsWith('#')) { i++; continue }
+
+    // def funcname(params):
+    if (line.startsWith('def ')) {
+      const m = line.match(/^def\s+(\w+)\s*\(([^)]*)\)\s*:/)
+      if (m) {
+        const fname = m[1]
+        const params = m[2].split(',').map(p => p.trim()).filter(Boolean)
+        const body = []
+        i++
+        while (i < lines.length && /^(\s{4}|\t)/.test(lines[i])) {
+          body.push(lines[i].trim())
+          i++
+        }
+        funcs[fname] = { params, body }
+        continue
       }
     }
+
+    // for var in range(...):
+    const forM = line.match(/^for\s+(\w+)\s+in\s+range\(([^)]+)\)\s*:/)
+    if (forM) {
+      const loopVar = forM[1]
+      const rawArgs = forM[2].split(',').map(a => Number(resolveVal(a.trim())))
+      const [rStart, rEnd, rStep] =
+        rawArgs.length === 1 ? [0, rawArgs[0], 1] :
+        rawArgs.length === 2 ? [rawArgs[0], rawArgs[1], 1] : rawArgs
+      const body = []
+      i++
+      while (i < lines.length && /^(\s{4}|\t)/.test(lines[i])) {
+        body.push(lines[i].trim())
+        i++
+      }
+      for (let v = rStart; v < rEnd; v += rStep) {
+        vars[loopVar] = v
+        for (const bl of body) execLine(bl)
+      }
+      continue
+    }
+
+    // for var in list:
+    const forListM = line.match(/^for\s+(\w+)\s+in\s+(\w+)\s*:/)
+    if (forListM) {
+      const loopVar = forListM[1]
+      const arr = vars[forListM[2]]
+      const body = []
+      i++
+      while (i < lines.length && /^(\s{4}|\t)/.test(lines[i])) {
+        body.push(lines[i].trim())
+        i++
+      }
+      if (Array.isArray(arr)) {
+        for (const v of arr) {
+          vars[loopVar] = v
+          for (const bl of body) execLine(bl)
+        }
+      }
+      continue
+    }
+
+    // while condition:
+    const whileM = line.match(/^while\s+(.+?)\s*:/)
+    if (whileM) {
+      const body = []
+      i++
+      while (i < lines.length && /^(\s{4}|\t)/.test(lines[i])) {
+        body.push(lines[i].trim())
+        i++
+      }
+      let guard = 0
+      while (guard++ < 200) {
+        try {
+          const condExpr = whileM[1].replace(/\b([a-zA-Z_]\w*)\b/g, tok =>
+            tok in vars ? JSON.stringify(vars[tok]) : tok
+          )
+          // eslint-disable-next-line no-new-func
+          if (!new Function(`return (${condExpr})`)()) break
+        } catch { break }
+        for (const bl of body) execLine(bl)
+      }
+      continue
+    }
+
+    execLine(line)
+    i++
   }
 
   return outputs
@@ -64,10 +240,11 @@ function checkAnswer(code, lesson) {
 
   const outputs = evalCode(trimmed)
   const expected = lesson.expectedOutput.trim()
+  const joined = outputs.join('\n')
 
+  if (joined === expected) return 'correct'
+  if (joined.toLowerCase() === expected.toLowerCase()) return 'correct'
   if (outputs.some(o => o.trim() === expected)) return 'correct'
-
-  // Fuzzy: ignore case and extra whitespace
   if (outputs.some(o => o.trim().toLowerCase() === expected.toLowerCase())) return 'correct'
 
   return 'wrong'
