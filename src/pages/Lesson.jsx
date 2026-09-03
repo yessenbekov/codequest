@@ -50,15 +50,15 @@ function evalCode(code) {
       if (Array.isArray(arr)) return arr[Number(idxM[2])]
     }
 
-    // string methods: var.upper() / .lower() / .capitalize() / .strip() / .len()
-    const methodM = expr.match(/^(\w+)\.(upper|lower|capitalize|strip)\(\)$/)
+    // string methods: var.upper() / .lower() / .capitalize() / .strip() / .toUpperCase() etc
+    const methodM = expr.match(/^(\w+)\.(upper|lower|capitalize|strip|toUpperCase|toLowerCase|trim)\(\)$/)
     if (methodM) {
       const val = String(resolveVal(methodM[1], localVars))
       switch (methodM[2]) {
-        case 'upper': return val.toUpperCase()
-        case 'lower': return val.toLowerCase()
+        case 'upper': case 'toUpperCase': return val.toUpperCase()
+        case 'lower': case 'toLowerCase': return val.toLowerCase()
         case 'capitalize': return val.charAt(0).toUpperCase() + val.slice(1).toLowerCase()
-        case 'strip': return val.trim()
+        case 'strip': case 'trim': return val.trim()
       }
     }
 
@@ -130,6 +130,22 @@ function evalCode(code) {
       return
     }
 
+    // i++ / i--
+    const incM = line.match(/^(\w+)(\+\+|--)$/)
+    if (incM) {
+      localVars[incM[1]] = Number(localVars[incM[1]]) + (incM[2] === '++' ? 1 : -1)
+      return
+    }
+
+    // i += n / i -= n
+    const compM = line.match(/^(\w+)\s*([+\-])=\s*(.+)$/)
+    if (compM) {
+      const cur = Number(localVars[compM[1]]) || 0
+      const delta = Number(resolveVal(compM[3], localVars))
+      localVars[compM[1]] = compM[2] === '+' ? cur + delta : cur - delta
+      return
+    }
+
     // Standalone function call
     const callM = line.match(/^(\w+)\(([^)]*)\)$/)
     if (callM && funcs[callM[1]]) {
@@ -161,6 +177,41 @@ function evalCode(code) {
         funcs[fname] = { params, body }
         continue
       }
+    }
+
+    // JS for loop: for (let i = 0; i < n; i++) {
+    const jsForM = line.match(/^for\s*\(\s*(?:let|var|const)?\s*(\w+)\s*=\s*([^;]+);\s*(\w+)\s*([<>]=?|!==?|===?)\s*([^;]+);\s*(\w+)(\+\+|--|\s*[+\-]=\s*\d+)\s*\)/)
+    if (jsForM) {
+      const [, loopVar, initExpr, condVar, condOp, condVal, , stepExpr] = jsForM
+      const body = []
+      i++
+      while (i < lines.length && /^(\s{4}|\t|\s{2})/.test(lines[i])) {
+        body.push(lines[i].trim())
+        i++
+      }
+      // also consume single-line {} body
+      vars[loopVar] = resolveVal(initExpr.trim(), vars)
+      let guard = 0
+      while (guard++ < 500) {
+        const cv = Number(resolveVal(condVal.trim(), vars))
+        const lv = Number(vars[loopVar])
+        let cond = false
+        if (condOp === '<') cond = lv < cv
+        else if (condOp === '<=') cond = lv <= cv
+        else if (condOp === '>') cond = lv > cv
+        else if (condOp === '>=') cond = lv >= cv
+        else if (condOp === '!=' || condOp === '!==') cond = lv !== cv
+        else if (condOp === '==' || condOp === '===') cond = lv === cv
+        if (!cond) break
+        for (const bl of body) execLine(bl)
+        if (stepExpr === '++') vars[loopVar] = Number(vars[loopVar]) + 1
+        else if (stepExpr === '--') vars[loopVar] = Number(vars[loopVar]) - 1
+        else {
+          const dm = stepExpr.match(/([+\-])=\s*(\d+)/)
+          if (dm) vars[loopVar] = Number(vars[loopVar]) + Number(dm[1] + dm[2])
+        }
+      }
+      continue
     }
 
     // for var in range(...):

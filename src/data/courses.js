@@ -275,6 +275,125 @@ console.log(10 / 2);  // 5
         hint: 'console.log(7 * 6)',
         type: 'output',
       },
+      {
+        id: 'js-if',
+        title: 'Условия if/else',
+        xp: 25,
+        theory: `**if/else** работает так же, как в Python, но блоки оборачиваются в **{}**:
+
+\`\`\`js
+const age = 18;
+if (age >= 18) {
+    console.log("Взрослый");
+} else {
+    console.log("Ребёнок");
+}
+\`\`\`
+
+Условие всегда в **круглых скобках** \`()\`, тело — в **фигурных** \`{}\`.`,
+        task: 'Напиши код: если score = 85 и score >= 60 — выведи "Сдал", иначе "Не сдал".',
+        expectedOutput: 'Сдал',
+        hint: 'const score = 85; if (score >= 60) { console.log("Сдал"); }',
+        type: 'output',
+      },
+      {
+        id: 'js-for',
+        title: 'Цикл for',
+        xp: 30,
+        theory: `В JS цикл **for** имеет три части: инициализация, условие, шаг:
+
+\`\`\`js
+for (let i = 1; i <= 3; i++) {
+    console.log(i);
+}
+// выведет: 1 2 3
+\`\`\`
+
+- \`let i = 1\` — начальное значение
+- \`i <= 3\` — условие продолжения
+- \`i++\` — увеличение на 1 после каждой итерации`,
+        task: 'Выведи числа от 1 до 3, каждое на новой строке.',
+        expectedOutput: '1\n2\n3',
+        hint: 'for (let i = 1; i <= 3; i++) { console.log(i); }',
+        type: 'output',
+      },
+      {
+        id: 'js-functions',
+        title: 'Функции',
+        xp: 35,
+        theory: `Функции объявляются через **function** или стрелочный синтаксис **=>**:
+
+\`\`\`js
+function greet(name) {
+    return "Привет, " + name + "!";
+}
+console.log(greet("Алибек")); // Привет, Алибек!
+\`\`\`
+
+Стрелочная функция — более короткая запись:
+
+\`\`\`js
+const square = (n) => n * n;
+console.log(square(4)); // 16
+\`\`\``,
+        task: 'Напиши функцию cube(n), которая возвращает n * n * n. Выведи cube(3).',
+        expectedOutput: '27',
+        hint: 'function cube(n) { return n * n * n; } console.log(cube(3));',
+        type: 'output',
+      },
+      {
+        id: 'js-arrays',
+        title: 'Массивы',
+        xp: 35,
+        theory: `**Массив** хранит список значений:
+
+\`\`\`js
+const fruits = ["яблоко", "банан", "апельсин"];
+console.log(fruits[0]);      // яблоко
+console.log(fruits.length);  // 3
+\`\`\`
+
+Перебор массива:
+\`\`\`js
+for (let i = 0; i < fruits.length; i++) {
+    console.log(fruits[i]);
+}
+\`\`\`
+
+Или современный способ:
+\`\`\`js
+fruits.forEach(fruit => console.log(fruit));
+\`\`\``,
+        task: 'Создай массив numbers = [5, 10, 15]. Выведи второй элемент (индекс 1).',
+        expectedOutput: '10',
+        hint: 'const numbers = [5, 10, 15]; console.log(numbers[1]);',
+        type: 'output',
+      },
+      {
+        id: 'js-strings',
+        title: 'Строки',
+        xp: 30,
+        theory: `Строки в JS имеют полезные методы:
+
+\`\`\`js
+const s = "hello";
+console.log(s.toUpperCase());  // HELLO
+console.log(s.length);         // 5
+console.log(s.includes("ell")); // true
+\`\`\`
+
+**Шаблонные строки** (template literals) с обратными кавычками:
+
+\`\`\`js
+const name = "Алибек";
+const age = 20;
+console.log(\`Меня зовут \${name}, мне \${age} лет\`);
+\`\`\``,
+        task: 'Создай переменную name = "javascript". Выведи её в верхнем регистре через .toUpperCase().',
+        expectedOutput: 'JAVASCRIPT',
+        hint: 'const name = "javascript"; console.log(name.toUpperCase());',
+        type: 'output',
+      },
     ],
   },
 ]
