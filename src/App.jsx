@@ -1,6 +1,9 @@
 import { useState, useCallback, useEffect } from 'react'
 import { supabase } from './lib/supabase'
-import { loadProgress, saveProgress, markLessonComplete, isLessonCompleted } from './store/progress'
+import {
+  loadProgress, saveProgress, markLessonComplete, isLessonCompleted,
+  loadProgressFromSupabase, saveProgressToSupabase,
+} from './store/progress'
 import { loadTheme, applyTheme } from './store/theme'
 import Home from './pages/Home'
 import CourseMap from './pages/CourseMap'
@@ -32,9 +35,23 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  const updateProgress = useCallback((next) => {
+  // When session changes (login/logout), sync progress from Supabase
+  useEffect(() => {
+    if (!session?.user) return
+    loadProgressFromSupabase(session.user.id).then(remote => {
+      if (!remote) return
+      // Merge: take max XP in case both have data
+      const local = loadProgress()
+      const merged = remote.xp >= local.xp ? remote : local
+      setProgress(merged)
+      saveProgress(merged)
+    })
+  }, [session?.user?.id])
+
+  const updateProgress = useCallback((next, userId) => {
     setProgress(next)
     saveProgress(next)
+    if (userId) saveProgressToSupabase(userId, next)
   }, [])
 
   function handleSelectCourse(course) {
@@ -48,7 +65,8 @@ export default function App() {
   }
 
   function handleCompleteLesson(lesson) {
-    updateProgress(markLessonComplete(progress, lesson.id, lesson.xp))
+    const next = markLessonComplete(progress, lesson.id, lesson.xp)
+    updateProgress(next, session?.user?.id)
   }
 
   function handleNextLesson() {

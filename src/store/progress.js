@@ -1,3 +1,5 @@
+import { supabase } from '../lib/supabase'
+
 const KEY = 'codequest_progress'
 
 const defaultState = () => ({
@@ -18,6 +20,23 @@ export function loadProgress() {
 
 export function saveProgress(state) {
   localStorage.setItem(KEY, JSON.stringify(state))
+}
+
+export async function loadProgressFromSupabase(userId) {
+  const { data, error } = await supabase
+    .from('user_progress')
+    .select('data')
+    .eq('user_id', userId)
+    .single()
+
+  if (error || !data) return null
+  return { ...defaultState(), ...data.data }
+}
+
+export async function saveProgressToSupabase(userId, state) {
+  await supabase
+    .from('user_progress')
+    .upsert({ user_id: userId, data: state, updated_at: new Date().toISOString() })
 }
 
 export function markLessonComplete(state, lessonId, xpGain) {
